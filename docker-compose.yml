@@ -1,0 +1,64 @@
+version: "3"
+networks: 
+    rescompose:
+        ipam: 
+            config: 
+                - subnet: 172.18.200.0/24
+services: 
+    nginx:
+        image: nginx:latest
+        networks: 
+            rescompose:
+                ipv4_address: 172.18.200.5
+        depends_on: 
+            - phpmyadmin
+            - owncloud
+        ports: 
+            - "80:80"
+        volumes: 
+            - "./nginx/nginx.conf:/etc/nginx/nginx.conf"
+    mysql:
+        image: mysql:5.7
+        volumes: 
+            - "./data/mysql/:/var/lib/mysql"
+        networks: 
+            rescompose:
+                aliases: 
+                    - mysql
+                    - bdd
+                    - bd
+        environment: 
+            - MYSQL_ROOT_PASSWORD=passbdd
+            - MYSQL_USER=owncloud
+            - MYSQL_PASSWORD=passowc
+            - MYSQL_DATABASE=owncloud
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        depends_on: 
+            - mysql
+        networks: 
+            rescompose:
+                aliases: 
+                    - phpmyadmin
+                    - pma
+        environment: 
+            - PMA_HOST=mysql
+    owncloud:
+        build: ./owncloud
+        depends_on: 
+            - mysql
+        volumes: 
+            - "./data/owncloud/:/var/www/html"
+        networks: 
+            rescompose:
+                aliases: 
+                    - owncloud
+                    - owc
+        environment: 
+            - MYSQL_DATABASE=owncloud
+            - MYSQL_USER=owncloud
+            - OWNCLOUD_ADMIN_USER=admin
+            - OWNCLOUD_ADMIN_PASSWORD=passadmin
+            
+        
+            
